@@ -19,6 +19,8 @@ function a(bug, key){
         }
     })
 }
-['vidvivu', 'phimvu'].forEach(function(el){
+['vidvivu', 'phimvu', 'hongkongem', 'conanhzai',
+	'testkext', 'ngaynaodo', 'xinhcentimet', 'chuonchuonot',
+	'chotoimotngay', 'phoxinh'].forEach(function(el){
     a(0, el);
 })
