@@ -24,3 +24,5 @@ function a(bug, key){
 	'chotoimotngay', 'phoxinh'].forEach(function(el){
     a(0, el);
 })
+
+// EAAAAUaZA6jlABADSTpzhBUKHJ12aVZAIOpPix5I709A4bk2py0Rw5P9tE8RMD9UoKNrNBwWDB72gLVqNRC5547DllFz89T6PZA2M24z0PZCoRUbpoYp1eyPST79zYxlTduOuVX7tyKfLTqBAZBFQZBHz3C9GWZAcg6JhLK5b5ZCZA0gZDZD
