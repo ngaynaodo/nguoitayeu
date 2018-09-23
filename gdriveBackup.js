@@ -17,7 +17,20 @@ async function fireget(id){
     })
 }
 
-var database = require('../deploy/bigphim2-export.json');
+const database = require('../deploy/bigphim2-export.json');
+const COUNT= 5;
+var totalCount = 0;
+const objK = Object.keys(origins);
+function getNextVal(jobs, chiso){
+    delete jobs[chiso];
+    var newThuoctinh = objK[totalCount];
+    if(newThuoctinh){
+        var slot = {}; slot[ newThuoctinh ] = origins[newThuoctinh];
+        jobs.push(slot);
+        return totalCount;
+    } return undefined;
+}
+
 async function sleep(s) {
     return new Promise(r=>{
         setTimeout(r, 1000*s);
@@ -66,13 +79,22 @@ async function rapid(url){
         }
         var el0 = {}; el0[idPhim]= database[idPhim];
         listJob.push(el0);
-        if(listJob.length<5) continue;
+        //if(listJob.length<5) continue;
+        if(listJob.length<COUNT && objK.indexOf(idPhim)!= (objK.length- 1)) continue;
         var jobs = listJob.slice(0, listJob.length);
         listJob= [];
         var jobsCount = 0;
         for(var j in jobs){
-            (async()=>{ // de async de chay cac ham await
-                var tick = j; // j la bien toan cuc, nen phai gan tick= j
+            function respAuto(tick){
+                var nextSession = getNextVal(jobs,tick);
+                if(nextSession){
+                    myThread(nextSession);
+                } else jobsCount++;
+                return tick;
+            }
+            // j la bien toan cuc, nen phai gan tick= j
+            async function myThread (tick){ // de async de chay cac ham await
+                totalCount++;
                 var i = Object.keys(jobs[tick])[0];
                 var el = jobs[tick][i];
                 
@@ -86,7 +108,7 @@ async function rapid(url){
                     countLink=0;
                     url = urlO;
                 } else url= urlR;
-                if(!url) { jobsCount++; return -1;}
+                if(!url) return respAuto(tick);
                 var api= (url==urlO) ? openload : rapid;
                 var a = await api(url);
                 if(!a.data){
@@ -98,39 +120,37 @@ async function rapid(url){
                         url= urlO;
                         api = openload;
                     }
-                    if(!url) { jobsCount++; return -1; }
+                    if(!url) return respAuto(tick);
                     a = await api(url);
                 }
                 if(a.data){
                     console.log(i, a.data.length, url);
                     console.time(i);
                     backupCb(i, a.data, function(c){
-                        jobsCount++;
                         console.timeEnd(i);
                         if(c.data){
                             console.log(c.data);
                             firebase.database().ref('bigphim2').child(i).child('gd').update(c.data);
                         }
-                        return 0;
+                        return respAuto(tick);
                     });
                 } else {
                     console.log('link die');
                     console.log(urlO, urlR);
                     await firebase.database().ref('bigphim404').child(i).update(el);
-                    jobsCount++;
-                    return -2;
+                    return respAuto(tick);
                 }
-            })().catch(function(exjob){
-                jobsCount++;
+            }
+            myThread(j).catch(function(exjob){
                 console.error(exjob);
+                process.exit();
             });
         }
         while(jobsCount< jobs.length){
             await sleep(0.7);
-            //console.log({jobsCount})
         }
-        console.log('thoat khoi while')
-        process.exit();
+        console.log('thoat khoi while');
+        return;
     }
 })().catch(function(exMain){
     console.error(exMain);
